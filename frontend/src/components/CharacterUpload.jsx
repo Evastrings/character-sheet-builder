@@ -5,6 +5,7 @@ function CharacterUpload() {
     const [loading, setLoading] = useState(false)
     const [selectedFile, setSelectedFile] = useState(null)
     const [imageUrls, setImageUrls] = useState([])
+    const [prompt, setPrompt] = useState("")
     
     
 
@@ -17,6 +18,8 @@ function CharacterUpload() {
         try {
             const formData = new FormData()
             formData.append("image", selectedFile)
+            formData.append("text", prompt)
+
 
             const response = await fetch('http://127.0.0.1:8000/generate', {
                 method: 'POST',
@@ -25,7 +28,7 @@ function CharacterUpload() {
             );
 
             const data = await response.json();
-            console.log('Img urls recieved:', data);
+            console.log('Img urls recieved:', data); 
             setImageUrls(data.images)
 
         }
@@ -43,6 +46,12 @@ function CharacterUpload() {
     return (
         <>
             <form>
+                <label>
+                    <input type="text"
+                    value={prompt}
+                    onChange={(event) => setPrompt(event.target.value)}
+                    />
+                </label>
                 <label>
                     {selectedFile ? selectedFile.name : 'Choose Image'}
                     <input type="file"
