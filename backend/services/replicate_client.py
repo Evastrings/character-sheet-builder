@@ -8,13 +8,13 @@ REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 
 
 
-async def upload_image(image_bytes: bytes, filename: str) -> str:
-    """
-    Upload raw image bytes to Replicate's file upload endpoint.
-    Returns a public URL string.
-    Docs: POST https://api.replicate.com/v1/files
-    """
-    pass
+# async def upload_image(image_bytes: bytes, filename: str) -> str:
+#     """
+#     Upload raw image bytes to Replicate's file upload endpoint.
+#     Returns a public URL string.
+#     Docs: POST https://api.replicate.com/v1/files
+#     """
+#     pass
 
 
 async def generate_views(image_url: str) -> list[str]:
