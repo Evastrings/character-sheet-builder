@@ -7,8 +7,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
-print(REPLICATE_API_TOKEN)
-print("see")
 MODEL_VERSION = "0304f7f774ba7341ef754231f794b1ba3d129e3c46af3022241325ae0c50fb99"
 
 POSE_URLS = {
@@ -24,12 +22,17 @@ async def run_single_prediction(pose_url: str, prompt: str) -> str:
         "prompt": prompt
     }
     # 2. Get back a prediction id
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
             url= "https://api.replicate.com/v1/predictions",
             headers= {"Authorization": f"Bearer {REPLICATE_API_TOKEN}"},
             json={"version": MODEL_VERSION, "input": input_d}
         )
+        if response.status_code != 201:
+            raise Exception(f"Replicate error {response.status_code}: {response.json()}")
+        print(response.status_code)
+        print("=== RESPONSE JSON BELOW")
+        print(response.json())
         # 3. Poll GET /predictions/{id} until status == "succeeded"
         prediction_id = response.json()["id"]
         while True:
