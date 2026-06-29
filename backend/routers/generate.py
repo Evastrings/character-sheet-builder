@@ -1,8 +1,10 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, Form
 
 router = APIRouter()
 
-@router.post("/generate")
+@router.get("/generate")
 async def generate_character_sheet(image: UploadFile = File(...)):
     
-    pass
+    return {
+        "message": "Yokoso watashi no soul society"
+    }
