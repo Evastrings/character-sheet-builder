@@ -16,17 +16,6 @@ POSE_URLS = {
     "back":  "https://raw.githubusercontent.com/Evastrings/character-sheet-builder/main/backend/assets/pose_back.png",
 }
 
-
-# # To access the file URLs:
-# print(output[0].url)
-# #=> "https://replicate.delivery/.../output_0.png"
-
-# # To write the files to disk:
-# for index, item in enumerate(output):
-#     with open(f"output_{index}.png", "wb") as file:
-#         file.write(item.read())
-# #=> output_0.png, output_1.png written to disk
-# prompt = "user_prompt"
 async def run_single_prediction(pose_url: str, prompt: str) -> str:
     # 1. POST to https://api.replicate.com/v1/predictions
     #    with the correct JSON body and Authorization header
@@ -35,20 +24,34 @@ async def run_single_prediction(pose_url: str, prompt: str) -> str:
         "prompt": prompt
     }
     # 2. Get back a prediction id
-    output_pred = httpx.AsyncClient.post(
-        url= "https://api.replicate.com/v1/predictions",
-        headers= f"Authorization: Bearer {REPLICATE_API_TOKEN}",
-        content= "application/json",
-        data=input_d,
-        # version= MODEL_VERSION
-    )
+    async with httpx.AsyncClient as client:
+        response = await client.post(
+            url= "https://api.replicate.com/v1/predictions",
+            headers= {"Authorization": f"Bearer {REPLICATE_API_TOKEN}"},
+            json={"version": MODEL_VERSION, "input": input_d}
+        )
     # 3. Poll GET /predictions/{id} until status == "succeeded"
-    url_id = await output_pred.id
-    output_get = httpx.get(
-        url= f"https://api.replicate.com/v1/predictions/{url_id}",
+    # url_id = await output_pred.id
+    prediction_id = response.json()[id]
+    output_get = client.get(
+        url= f"https://api.replicate.com/v1/predictions/{prediction_id}",
         headers= f"Authorization: Bearer {REPLICATE_API_TOKEN}",
 
     )
+    while True:
+        output_get = client.get(
+            url= f"https://api.replicate.com/v1/predictions/{prediction_id}",
+            headers= f"Authorization: Bearer {REPLICATE_API_TOKEN}"
+        )
+        # GET /predictions/{id}
+        if output_get.status == "succeeded":
+            break
+
+        elif output_get.status == "failed":
+            raise httpx.TimeoutException
+        else:
+            await asyncio.sleep(2)
+            
 
     # 4. Return the output URL (output is a list, return index 0)
     return output_get[0].url
@@ -56,7 +59,7 @@ async def run_single_prediction(pose_url: str, prompt: str) -> str:
 
 async def generate_views(prompt: str) -> list[str]:
     # Use asyncio.gather() to run run_single_prediction 3 times concurrently
-    img_urls = await asyncio.gather(*[run_single_prediction(url, prompt) for url in POSE_URLS.values])
+    img_urls = await asyncio.gather(*[run_single_prediction(url, prompt) for url in POSE_URLS.values()])
     # Once for each pose in POSE_URLS
     # Return list of 3 output URLs
     return list(img_urls)
@@ -100,3 +103,13 @@ async def generate_views(prompt: str) -> list[str]:
 #     # 4. Return the output URL (output is a list, return index 0)
     # pass
 
+# # To access the file URLs:
+# print(output[0].url)
+# #=> "https://replicate.delivery/.../output_0.png"
+
+# # To write the files to disk:
+# for index, item in enumerate(output):
+#     with open(f"output_{index}.png", "wb") as file:
+#         file.write(item.read())
+# #=> output_0.png, output_1.png written to disk
+# prompt = "user_prompt"
