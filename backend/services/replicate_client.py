@@ -53,8 +53,12 @@ async def run_single_prediction(pose_url: str, prompt: str) -> str:
 
 
 async def generate_views(prompt: str) -> list[str]:
-    # Use asyncio.gather() to run run_single_prediction 3 times concurrently
-    img_urls = await asyncio.gather(*[run_single_prediction(url, prompt) for url in POSE_URLS.values()])
-    # Once for each pose in POSE_URLS
-    # Return list of 3 output URLs
-    return list(img_urls)
+    results = []
+    for url in POSE_URLS.values():
+        result = await run_single_prediction(url, prompt)
+        results.append(result)
+        # # Use asyncio.gather() to run run_single_prediction 3 times concurrently
+    # img_urls = await asyncio.gather(*[run_single_prediction(url, prompt) for url in POSE_URLS.values()])
+    # # Once for each pose in POSE_URLS
+    # # Return list of 3 output URLs
+    return list(results)
